@@ -1,0 +1,108 @@
+---
+title: "Portfolio Presentation"
+author: "Carter McMahon"
+format:
+  revealjs: 
+    theme: moon
+    margin: 0.01
+    smaller: true
+    multiplex: true
+---
+
+```{r setup, echo = FALSE, warnings = FALSE, message = FALSE}
+#| include: false
+library(tidyverse)
+library(magrittr)
+library(readxl)
+library(plotly)
+library(crosstalk)
+library(sf)
+library(leaflet)
+library(data.table)
+```
+
+## BART Ridership
+
+```{r warning = FALSE, message = FALSE, results = 'hide'}
+# Reading in the CSV file with average yearly entries for the 5 most frequented stations in 2022
+entries_coord <- read.csv("./entries_coord.csv")
+
+# Reading in the KMZ file with BART station info, and altering it to match the above
+stations <- st_read("./BART_System_2020.kmz") %>% 
+  mutate(Name = str_replace(Name, "St", "Street"),
+         Name = case_when(Name == "19th Street/Oakland" ~ "19th Street Oakland",
+                          Name == "12th Street/Oakland City Center" ~ "12th Street Oakland City Center",
+                          Name == "16th Street/Mission" ~ "16th Street Mission",
+                          Name == "24th Street/Mission" ~ "24th Street Mission",
+                          TRUE ~ Name)) %>%
+  filter(Name != "Coliseum/Airport Connector" & 
+           Name != "eBART Transfer" &
+           !(Name %in% entries_coord$origin)
+)
+
+# Reading in CSV file with route info
+routes <- read.csv("./routes.csv")
+
+# Creating an SF object from the route data
+setDT(routes)
+sf <- routes[
+  , {
+    geometry <- st_linestring(x = matrix(c(orig_lng, orig_lat, dest_lng, dest_lat), ncol = 2, byrow = T))
+    geometry <- st_sfc(geometry)
+    geometry <- st_sf(geometry = geometry)
+  }
+  , by = idx
+]
+sf <- st_as_sf(sf) %>% cbind(route = routes$route, origin = routes$origin, destination = routes$destination)
+
+# Setting map info
+myLAT <- 37.767980571734725
+myLNG <- -122.40626450282319
+myZOOM <- 12
+myTILES <- "CartoDB.Positron"
+
+# Specifying the color palette for Leaflet
+pal <- colorFactor(c("#CC79A7", "#D55E00", "#E69F00", "#009E73", "#0072B2"), 
+                   domain = entries_coord$origin %>% unique())
+
+# Making the shared data for crosstalk
+shared_entries <- SharedData$new(entries_coord, ~id)
+```
+
+```{r warnings = FALSE, message = FALSE}
+#| layout: [[25, 50, 25]]
+#| out-width: 100%
+filter_checkbox("routes", "Select From the 5 Most Frequented Origin Stations", shared_entries, ~origin)
+plot_ly(shared_entries, 
+        x = ~year, y = ~total_riders, 
+        color = ~origin, colors = c("#CC79A7", "#D55E00", "#E69F00", "#009E73", "#0072B2"), 
+        name = ~origin, 
+        type = "scatter", mode = "line",
+        width=500, height=550) %>%
+  layout(xaxis = list(title = 'Year'),
+         yaxis = list(title = 'Total Number of Entering Riders'),
+         legend = list(x = 0.1, y = 0.0225))
+leaflet(shared_entries, width=500, height=550) %>% 
+  addProviderTiles(myTILES) %>%
+  setView(myLNG, myLAT, zoom = myZOOM) %>%
+  addPolylines(data = sf, color = "#1A1A1A") %>%
+  addCircleMarkers(data = stations, label = ~Name, color = "#1A1A1A", fillOpacity = 0.7) %>%
+  addCircleMarkers(label = ~origin, color = ~pal(origin), fillOpacity = 0.5)
+```
+
+## Bullets
+
+When you click the **Render** button a document will be generated that includes:
+
+-   Content authored with markdown
+-   Output from executable code
+
+## Code
+
+When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+
