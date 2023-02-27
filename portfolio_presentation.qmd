@@ -4,8 +4,9 @@ author: "Carter McMahon"
 format:
   revealjs: 
     theme: moon
-    margin: 0.01
-    smaller: true
+    margin-left: '0.01'
+    margin-right: '0.01'
+    scrollable: true
     multiplex: true
 ---
 
@@ -19,9 +20,84 @@ library(crosstalk)
 library(sf)
 library(leaflet)
 library(data.table)
+library(ggiraph)
 ```
 
-## BART Ridership
+## Introduction
+
+Hello! This is a presentation by and about me, Carter McMahon. I am a student at Willamette University's Master's in Data Science program, and I will be completing that program in August 2023.
+
+## Overview
+
+This presentation will demonstrate some of the skills I have learned in my Master's program. There will be three graphics I made, and each one will be followed by the code that generates it.
+
+## Travel Emissions
+
+```{r warnings = FALSE, message = FALSE}
+emissions_data <- read_csv("./travel_emissions.csv")
+
+emissions_gg <- emissions_data %>%
+  filter(!grepl("\\d", mode) &
+         !grepl("\\+", mode)) %>%
+  ggplot(aes(x = emissions, 
+             y = reorder(mode, emissions),
+             fill = category)) +
+    geom_col_interactive(aes(tooltip = paste("Emissions:", emissions, sep = " "),
+                             data_id = mode),
+                         hover_nearest = TRUE) +
+    scale_fill_manual(name = "Category",
+                      values = c("Air" = "#E69F00",
+                                  "Rail" = "#009E73",
+                                  "Road" = "#CC79A7",
+                                  "Water" = "#0072B2")) +
+    theme_minimal() +
+    labs(x = "Emissions (in grams of CO2 equivalents per passenger km)", 
+         y = "Mode of transport", 
+         title = "Emissions for Modes of Transport in the UK") +
+    theme(panel.grid.major.y = element_blank())
+
+girafe(ggobj = emissions_gg,
+       options = list(
+         opts_hover(css = "fill:gray")
+         )
+)
+```
+
+## Code for Travel Emissions
+
+```{r warnings = FALSE, message = FALSE}
+#| eval: false
+#| echo: true
+emissions_data <- read_csv("./travel_emissions.csv")
+
+emissions_gg <- emissions_data %>%
+  filter(!grepl("\\d", mode) &
+         !grepl("\\+", mode)) %>%
+  ggplot(aes(x = emissions, 
+             y = reorder(mode, emissions),
+             fill = category)) +
+    geom_col_interactive(aes(tooltip = paste("Emissions:", emissions, sep = " "),
+                             data_id = mode),
+                         hover_nearest = TRUE) +
+    scale_fill_manual(name = "Category",
+                      values = c("Air" = "#E69F00",
+                                  "Rail" = "#009E73",
+                                  "Road" = "#CC79A7",
+                                  "Water" = "#0072B2")) +
+    theme_minimal() +
+    labs(x = "Emissions (in grams of CO2 equivalents per passenger km)", 
+         y = "Mode of transport", 
+         title = "Emissions for Modes of Transport in the UK") +
+    theme(panel.grid.major.y = element_blank())
+
+girafe(ggobj = emissions_gg,
+       options = list(
+         opts_hover(css = "fill:gray")
+         )
+)
+```
+
+## BART Ridership {.smaller}
 
 ```{r warning = FALSE, message = FALSE, results = 'hide'}
 # Reading in the CSV file with average yearly entries for the 5 most frequented stations in 2022
@@ -90,19 +166,133 @@ leaflet(shared_entries, width=500, height=550) %>%
   addCircleMarkers(label = ~origin, color = ~pal(origin), fillOpacity = 0.5)
 ```
 
-## Bullets
+## Code for Bart Ridership
 
-When you click the **Render** button a document will be generated that includes:
-
--   Content authored with markdown
--   Output from executable code
-
-## Code
-
-When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
+```{r warnings = FALSE, message = FALSE}
+#| layout: [[25, 50, 25]]
+#| out-width: 100%
+#| eval: false
+#| echo: true
+filter_checkbox("routes", "Select From the 5 Most Frequented Origin Stations", shared_entries, ~origin)
+plot_ly(shared_entries, 
+        x = ~year, y = ~total_riders, 
+        color = ~origin, colors = c("#CC79A7", "#D55E00", "#E69F00", "#009E73", "#0072B2"), 
+        name = ~origin, 
+        type = "scatter", mode = "line",
+        width=500, height=550) %>%
+  layout(xaxis = list(title = 'Year'),
+         yaxis = list(title = 'Total Number of Entering Riders'),
+         legend = list(x = 0.1, y = 0.0225))
+leaflet(shared_entries, width=500, height=550) %>% 
+  addProviderTiles(myTILES) %>%
+  setView(myLNG, myLAT, zoom = myZOOM) %>%
+  addPolylines(data = sf, color = "#1A1A1A") %>%
+  addCircleMarkers(data = stations, label = ~Name, color = "#1A1A1A", fillOpacity = 0.7) %>%
+  addCircleMarkers(label = ~origin, color = ~pal(origin), fillOpacity = 0.5)
 ```
 
+## Transit Costs
 
+```{r}
+#| out-width: 100%
+knitr::include_app("https://cartermcmahon.shinyapps.io/Transit_Project/", height = "600")
+```
+
+## Code for Transit Costs
+
+```{r}
+#| eval: false
+#| echo: true
+load(file = "transit_data.RData")
+transit_cost$cost_km_millions <- as.numeric(transit_cost$cost_km_millions)
+
+# Make g20 summary tibble by...
+transit_grouped <- transit_cost %>%
+  group_by(country) %>% # grouping by country
+  summarise(avg_cost = mean(cost_km_millions)) %>% # calculate mean
+  mutate(grp = case_when(country == "AU" ~ "g20", # categorize g20 nations
+                         country == "CA" ~ "g20",
+                         country == "SA" ~ "g20",
+                         country == "US" ~ "g20",
+                         country == "IN" ~ "g20",
+                         country == "RU" ~ "g20",
+                         country == "TR" ~ "g20",
+                         country == "AR" ~ "g20",
+                         country == "BR" ~ "g20",
+                         country == "MX" ~ "g20",
+                         country == "FR" ~ "g20",
+                         country == "DE" ~ "g20",
+                         country == "IT" ~ "g20",
+                         country == "UK" ~ "g20",
+                         country == "CN" ~ "g20",
+                         country == "ID" ~ "g20",
+                         country == "JP" ~ "g20",
+                         country == "KR" ~ "g20"),
+         country = fct_reorder(country, avg_cost), # sort countries by cost
+         code = tolower(country), # need lower case to match country flag icons
+         code = ifelse(code == "uk", "gb", code), # recode uk to gb for flag
+         country_name = countrycode(country, 
+                                    origin = 'iso2c', destination = 'cldr.short.en', 
+                                    nomatch = NULL),
+         region = countrycode(country, 
+                              origin = 'iso2c', destination = 'un.region.name', 
+                              nomatch = NULL)) %>%
+  drop_na(country, avg_cost)
+
+grouped_mean <- transit_grouped %>% # calculate g20 average
+  summarise(mean_avg = mean(avg_cost))
+
+# Define UI
+ui <- fillPage(
+
+    # Application title
+    titlePanel("Compare per KM Costs of Transit Infrastructure Across Countries"),
+
+    # Selectize input for countries
+      fillRow(
+          selectizeInput(
+            'countries',
+            'Select one or more countries to compare',
+            transit_grouped$country_name,
+            selected = (transit_grouped %>% filter(grp == "g20"))$country_name,
+            multiple = TRUE,
+            width = "100%"
+          ),
+          plotOutput("distPlot", height = "80%"),
+          flex = c(2,6),
+          height = "100%"
+      ),
+    padding = 20
+)
+
+# Define server logic
+server <- function(input, output) {
+    
+    output$distPlot <- renderPlot({
+      transit_grouped %>%
+        filter(country_name %in% input$countries) %>%
+        ggplot(aes(x = avg_cost, y = reorder(country_name, avg_cost))) +
+        geom_bar(stat = "identity") + 
+        geom_flag(x = -1, aes(country = code), size = case_when(-length(input$countries) + 25 >= 18 ~ 18,
+                                                                -length(input$countries) + 25 <= 5 ~ 5,
+                                                                TRUE ~ -length(input$countries) + 25))+
+        geom_vline(data = transit_grouped %>% 
+                     filter(country_name %in% input$countries) %>%
+                     summarize(mean = mean(avg_cost)), 
+                   mapping = aes(xintercept = mean), linetype = "dashed")+
+        cowplot::theme_minimal_vgrid(16) +
+        theme(
+          axis.title.y = element_blank(),
+          legend.position = "none",
+          axis.title.x = element_text(size = 20),
+          axis.text.x = element_text(size = 16),
+          plot.caption = element_text(size = 12)
+        )+
+        labs(caption = "Data Source: Transit Costs Project (https://transitcosts.com)",
+             x = "Average Cost of Transit Projects per KM (in millions of USD)")
+    })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```

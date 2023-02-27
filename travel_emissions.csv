@@ -1,0 +1,40 @@
+mode,emissions,priv_pub,category
+Black cab ,211.76,Public,Road
+Bus,104.71,Public,Road
+Coach,27.79,Public,Road
+Diesel car (2 passengers),85.305,Private,Road
+Diesel car (4 passengers),42.6525,Private,Road
+Domestic flight,254.93,Public,Air
+Eurostar (international rail),5.97,Public,Rail
+Ferry (car passenger),129.518,Public,Water
+Ferry (foot passenger),18.738,Public,Water
+Large car (diesel),209.47,Private,Road
+Large car (hybrid),131.77,Private,Road
+Large car (gas),282.95,Private,Road
+Large car (plug-in hybrid),77.31,Private,Road
+Large electric vehicle ,66.88,Private,Road
+Light rail and tram,35.08,Public,Rail
+London Underground,30.84,Public,Rail
+Long-haul flight (business class),434.46,Public,Air
+Long-haul flight (economy),149.81,Public,Air
+Long-haul flight (economy+),239.7,Public,Air
+Long-haul flight (first class),599.25,Public,Air
+Medium car (diesel),170.61,Private,Road
+Medium car (hybrid),108.95,Private,Road
+Medium car (gas),192.28,Private,Road
+Medium car (plug-in hybrid),70.83,Private,Road
+Medium electric vehicle ,53.17,Private,Road
+Motorcycle (large),135.01,Private,Road
+Motorcycle (medium),102.89,Private,Road
+Motorcycle (small),84.45,Private,Road
+National rail,41.15,Public,Rail
+Petrol car (2 passengers),96.14,Private,Road
+Petrol car (4 passengers),48.07,Private,Road
+Short-haul flight (business class),233.6,Public,Air
+Short-haul flight (economy),155.73000000000002,Public,Air
+Small car (diesel),142.08,Private,Road
+Small car (hybrid),105.2,Private,Road
+Small car (gas),153.71,Private,Road
+Small car (plug-in hybrid),29.35,Private,Road
+Small electric vehicle ,45.67,Private,Road
+Taxi,150.18,Public,Road
